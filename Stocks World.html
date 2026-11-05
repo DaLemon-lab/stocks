@@ -1,0 +1,131 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Stocks World</title>
+<style>
+:root{color-scheme:dark;--bg:#1c1c1e;--p:#262628;--l:#3a3a3c;--t:#fff;--m:#8e8e93;--g:#6fd36f;--r:#ff5e57;--b:#0a84ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--t);font:14px -apple-system,"SF Pro Text",Helvetica,Arial,sans-serif;overflow:hidden}
+button,input{font:inherit;color:var(--t)}button{background:var(--l);border:0;border-radius:8px;padding:8px 14px;cursor:pointer}button:hover{filter:brightness(1.25)}
+button.on{background:#5a5a5e}input[type=text],input[type=number]{background:#111;border:1px solid var(--l);border-radius:8px;padding:9px 12px;width:100%}
+.scr{display:none;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px}.scr.show{display:flex}
+.card{background:var(--p);border-radius:14px;padding:22px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px}
+h1{font-size:44px;margin:0}h2{margin:0}.big{padding:18px;font-size:18px;font-weight:600}.m{color:var(--m)}.g{color:var(--g)}.r{color:var(--r)}
+.av{border-radius:50%;object-fit:cover;background:var(--l);display:inline-flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden}
+#world{display:none;height:100%;flex-direction:row}#world.show{display:flex}
+#side{width:270px;background:#222224;border-right:1px solid #000;display:flex;flex-direction:column;min-height:0}
+#side .top{padding:10px;display:flex;gap:8px;align-items:center}#list{overflow:auto;flex:1}
+.row{display:flex;justify-content:space-between;padding:9px 12px;border-bottom:1px solid #333;cursor:pointer}.row.sel,.row:hover{background:#4a4a4c}.row b{font-size:15px}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;padding:14px 18px;gap:10px;overflow:auto}
+.bar{display:flex;gap:18px;flex-wrap:wrap;align-items:center;background:var(--p);padding:10px 14px;border-radius:10px}.bar div span{display:block;font-size:11px;color:var(--m)}
+.sym{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.sym h1{font-size:40px}.sym .pr{margin-left:auto;text-align:right;font-size:22px}
+#cw{position:relative;height:300px;min-height:220px;border-radius:8px;background:#1f1f21;overflow:hidden;touch-action:none}
+#cv,#dv{position:absolute;inset:0;width:100%;height:100%}#dv{pointer-events:none}#dv.act{pointer-events:auto;cursor:crosshair}
+.cu{position:absolute;pointer-events:none;color:rgba(110,190,255,.55);font-size:11px;transform:translate(-2px,-2px);z-index:5}.cu i{display:block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:16px solid rgba(110,190,255,.45);transform:rotate(-30deg)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{padding:5px 12px;background:none;color:var(--m)}.tabs button.on{background:#5a5a5e;color:#fff}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px 18px;color:var(--m)}.stats b{color:#fff;float:right;font-weight:500}
+.trade{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.trade input{width:110px}.buy{background:#2f8f3f}.sell{background:#b5382f}
+@media(max-width:700px){#world.show{flex-direction:column}#side{width:100%;height:34%}}
+</style></head><body>
+<div id="menu" class="scr show"><div style="position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;display:flex;gap:8px;align-items:center"><span class="m" id="mn"></span><span id="ma"></span></div>
+<h1>Stocks</h1><div class="card"><button class="big" onclick="go('wsel')">Create world</button><button class="big" onclick="go('prof')">Profile</button></div></div>
+<div id="wsel" class="scr"><div class="card"><h2>Worlds</h2><div id="sv" style="display:flex;flex-direction:column;gap:8px"></div><button class="big" onclick="go('wnew')">Create world</button><button class="big" onclick="go('wjoin')">Join world</button><button onclick="go('menu')">Back</button></div></div>
+<div id="wnew" class="scr"><div class="card"><h2>Create world</h2><input type="text" id="wname" placeholder="World name" maxlength="30"><button class="big buy" onclick="createW()">Create</button><div class="r" id="e1"></div><button onclick="go('wsel')">Back</button></div></div>
+<div id="wjoin" class="scr"><div class="card"><h2>Join world</h2><input type="text" id="jcode" placeholder="Join code" maxlength="8" style="text-transform:uppercase"><button class="big buy" onclick="joinW()">Join</button><div class="r" id="e2"></div><button onclick="go('wsel')">Back</button></div></div>
+<div id="prof" class="scr"><div class="card"><h2>Profile</h2><div id="pa" style="align-self:center"></div><input type="text" id="pn" placeholder="New name" maxlength="20"><button onclick="saveName()">Change name</button><label class="m">Change profile: picture or video</label><input type="file" id="pf" accept="image/*,video/*"><div class="r" id="e3"></div><button onclick="go('menu')">Back</button></div></div>
+<div id="world"><div id="side"><div class="top"><button onclick="leave()">‹</button><input type="text" id="q" placeholder="Search" oninput="rList()"></div><div id="list"></div></div>
+<div id="main"><div class="bar" id="top"></div><div id="peers" class="tabs"></div>
+<div id="sel" class="m">Select a stock from the list to start trading.</div>
+<div id="sd" style="display:none;flex-direction:column;gap:10px"><div class="sym"><h1 id="s1"></h1><span class="m" id="s2"></span><div class="pr"><b id="s3"></b> <span id="s4"></span></div></div>
+<div class="tabs" id="rg"></div><div id="cw"><canvas id="cv"></canvas><canvas id="dv"></canvas><div id="cu"></div></div>
+<div class="tabs"><span class="m" style="padding:5px">Draw:</span><button id="bp" onclick="tl('pen')">✎ Pen</button><button id="be" onclick="tl('erase')">⌫ Erase</button><button onclick="clr()">Clear mine</button></div>
+<div class="stats" id="st"></div>
+<div class="trade"><input type="number" id="qty" min="1" value="1"><button class="buy" onclick="trade('b')">Buy</button><button class="sell" onclick="trade('s')">Sell</button><button class="sell" onclick="sh('x')" title="Bet the price goes down">Short (bet down)</button><button class="buy" onclick="sh('c')">Cover short</button><button onclick="sellAll()">Sell all</button><button onclick="sellAll(1)">Sell everything</button><span id="tm" class="m"></span></div></div></div></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let prof=LS('prof')||{name:'Player'+(100+Math.floor(Math.random()*900)),pfp:null,kind:null},db,R,rm,myId='u'+Math.random().toString(36).slice(2,8),code,world,wref,ddoc,unW,unD,cur,tool='none',strokes=[],range=100,peers=[],busy=false;
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rnd(a){a=(a+0x6D2B79F5)|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
+const P='Sol Nex Vor Qua Zen Aur Lum Bio Cry Dyn Eco Flu Gal Hel Ion Jet Kin Lyr Mer Nov Orb Pul Rad Sig Tri Uni Vex Wav Xen Zap'.split(' '),S='tech corp labs soft dyn works bank energy pharma foods air motors media health steel cloud gold logic'.split(' '),used=new Set(),ST=[];
+for(let i=0;i<500;i++){const p=P[i%30],s=S[i/30|0],y=[p.slice(0,3),p.slice(0,2)+s[0],p[0]+s.slice(0,2),p.slice(0,3)+s[0],p.slice(0,3)+s.slice(0,2)].map(x=>x.toUpperCase()).find(x=>!used.has(x))||'X'+i;used.add(y);const h=hash(y+i);ST.push({y,n:p+' '+s[0].toUpperCase()+s.slice(1)+' Inc.',h,b:3+Math.exp(rnd(h)*5.3),v:.003+rnd(h+2)*.011,d:(rnd(h+3)-.5)*.0003,a:[]})}
+function px(st,k){const a=st.a;while(a.length<=k){const i=a.length;if(!i){a.push(st.b);continue}const z=(rnd(st.h+i*7919)+rnd(st.h+i*104729+1)+rnd(st.h+i*13+2)-1.5)*2;a.push(Math.max(.5,a[i-1]*(1+st.v*z+st.d)))}return a[k]}
+const tick=()=>240+Math.max(0,Math.floor((Date.now()-world.created)/3000)),pr=st=>px(st,tick()),f=n=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function av(sz){const c=prof;if(c.pfp&&c.kind=='v')return`<video class="av" style="width:${sz}px;height:${sz}px" src="${c.pfp}" autoplay loop muted playsinline></video>`;if(c.pfp)return`<img class="av" style="width:${sz}px;height:${sz}px" src="${c.pfp}">`;return`<span class="av" style="width:${sz}px;height:${sz}px;font-size:${sz/2}px">${esc(c.name[0]||'?')}</span>`}
+function head(){$('#mn').textContent=prof.name;$('#ma').innerHTML=av(32);$('#pa').innerHTML=av(96)}
+function go(id){document.querySelectorAll('.scr,#world').forEach(e=>e.classList.remove('show'));$('#'+id).classList.add('show');head()}
+function saveName(){const n=$('#pn').value.trim();if(!n)return;prof.name=n.slice(0,20);SV('prof',prof);$('#pn').value='';head()}
+$('#pf').onchange=e=>{const fl=e.target.files[0];if(!fl)return;$('#e3').textContent='';const rd=new FileReader();rd.onload=()=>{if(fl.type.startsWith('video')){if(rd.result.length>2.5e6){$('#e3').textContent='Video too large (max about 1.8 MB).';return}prof.pfp=rd.result;prof.kind='v';SV('prof',prof);head()}else{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=128;const s=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,128,128);prof.pfp=c.toDataURL('image/jpeg',.8);prof.kind='i';SV('prof',prof);head()};im.src=rd.result}};rd.readAsDataURL(fl)};
+async function init(){head();try{db=await claude.use('db');R=await claude.use('room');const u=await claude.use('user');if(u){const i=await u.id();if(i)myId=i}}catch(e){}}
+init();
+const rc=()=>{const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=a[Math.floor(Math.random()*a.length)];return s};
+async function createW(){const n=$('#wname').value.trim();if(!n){$('#e1').textContent='Pick a name first.';return}if(!db){$('#e1').textContent='Multiplayer needs you to be signed in to claude.ai.';return}
+try{const c=rc();await db.doc('worlds/'+c).set({name:n,created:Date.now(),cash:100000,h:{}});enter(c)}catch(e){$('#e1').textContent='Could not create world.'}}
+async function joinW(){const c=$('#jcode').value.trim().toUpperCase();if(!db){$('#e2').textContent='Multiplayer needs you to be signed in to claude.ai.';return}
+try{const s=await db.doc('worlds/'+c).get();if(!c||!s.exists){$('#e2').textContent='No world with that code.';return}enter(c)}catch(e){$('#e2').textContent='Could not join.'}}
+async function enter(c){code=c;wref=db.doc('worlds/'+c);cur=null;peers=[];$('#sel').style.display='';$('#sd').style.display='none';go('world');
+unW=wref.onSnapshot(s=>{if(!s.exists)return;world=s.data();world.h=world.h||{};world.sh=world.sh||{};rTop();rList();info()});
+if(R)try{rm=await R.join('w'+c);rm.onPeers(ch=>{peers=ch.peers.filter(p=>!p.isMe);rPeers()})}catch(e){rm=null}}
+function leave(){unW&&unW();unD&&unD();unW=unD=null;try{rm&&rm.leave()}catch(e){}rm=null;world=null;cur=null;go('menu')}
+function worth(){let v=0;for(const y in world.h){const st=ST.find(s=>s.y==y);if(st)v+=world.h[y].q*pr(st)}for(const y in world.sh){const st=ST.find(s=>s.y==y);if(st){const e=world.sh[y];v+=Math.max(0,e.q*(2*e.c-pr(st)))}}return v}
+function rTop(){if(!world)return;const v=worth(),t=world.cash+v,pl=t-100000;$('#top').innerHTML=`<div><span>World</span><b>${esc(world.name)}</b></div><div><span>Join code</span><b style="letter-spacing:2px">${code}</b></div><div><span>Shared cash</span><b>$${f(world.cash)}</b></div><div><span>Stocks</span><b>$${f(v)}</b></div><div><span>Net worth</span><b>$${f(t)}</b></div><div><span>Profit</span><b class="${pl>=0?'g':'r'}">${pl>=0?'+':''}${f(pl)}</b></div>`}
+function rList(){if(!world)return;const q=$('#q').value.toLowerCase(),k=tick();$('#list').innerHTML=ST.filter(s=>!q||s.y.toLowerCase().includes(q)||s.n.toLowerCase().includes(q)).map(s=>{const p=px(s,k),c=p-px(s,k-100);return`<div class="row ${cur==s?'sel':''}" onclick="pick('${s.y}')"><div><b>${(world.h[s.y]||world.sh[s.y])?'<span style="color:#ffd60a">● </span>':''}${s.y}</b><div class="m">${s.n}</div></div><div style="text-align:right"><b>${f(p)}</b><div class="${c>=0?'g':'r'}">${c>=0?'+':''}${f(c)}</div></div></div>`}).join('')}
+function pick(y){cur=ST.find(s=>s.y==y);strokes=[];unD&&unD();ddoc=wref.collection('draw').doc(y);unD=ddoc.onSnapshot(s=>{if(busy)return;strokes=(s.data()||{}).s||[];dl()});$('#sel').style.display='none';$('#sd').style.display='flex';$('#s1').textContent=y;$('#s2').textContent=cur.n;rg();rList();pres();chart();rPeers();info()}
+function rg(){const R=[[20,'1m'],[100,'5m'],[300,'15m'],[1e9,'ALL']];$('#rg').innerHTML=R.map(r=>`<button class="${range==r[0]?'on':''}" onclick="range=${r[0]};rg();chart()">${r[1]}</button>`).join('')}
+function chart(){if(!cur||!world)return;const k=tick();px(cur,k);const n=Math.min(range,k),d=cur.a.slice(k-n,k+1),c=$('#cv'),v=$('#dv'),w=c.clientWidth,h=c.clientHeight,r=devicePixelRatio||1;
+if(c.width!==Math.round(w*r)||c.height!==Math.round(h*r)){c.width=v.width=Math.round(w*r);c.height=v.height=Math.round(h*r);dl()}
+const x=c.getContext('2d');x.setTransform(r,0,0,r,0,0);x.clearRect(0,0,w,h);const lh=world.h[cur.y],ls=world.sh[cur.y],ev=[lh&&lh.c,ls&&ls.c].filter(Boolean),lo=Math.min(...d),hi=Math.max(...d),l2=Math.min(lo,...ev),h2=Math.max(hi,...ev),pd=(h2-l2)*.12||1,a=l2-pd,b=h2+pd,W=w-52,Y=p=>h-8-(p-a)/(b-a)*(h-16),up=d[d.length-1]>=d[0],col=up?'#6fd36f':'#ff5e57';
+x.strokeStyle='#ffffff18';x.fillStyle='#8e8e93';x.font='11px sans-serif';x.lineWidth=1;for(let i=0;i<5;i++){const p=a+(b-a)*i/4,y=Y(p);x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();x.fillText(p.toFixed(2),W+6,y+4)}
+[[lh,'#ffd60a','Bought at '],[ls,'#ff9f0a','Shorted at ']].forEach(([e,c,t])=>{if(!e)return;const y=Y(e.c);x.save();x.setLineDash([6,4]);x.strokeStyle=c;x.lineWidth=1.3;x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();x.restore();x.fillStyle=c;x.fillText(t+f(e.c),6,y-5)});x.beginPath();d.forEach((p,i)=>{const X=i/(d.length-1||1)*W;i?x.lineTo(X,Y(p)):x.moveTo(X,Y(p))});x.strokeStyle=col;x.lineWidth=1.6;x.stroke();x.lineTo(W,h);x.lineTo(0,h);const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,col+'55');g.addColorStop(1,col+'00');x.fillStyle=g;x.fill();
+const p=d[d.length-1],c0=p-d[0];$('#s3').textContent=f(p);$('#s4').textContent=(c0>=0?'+':'')+f(c0);$('#s4').className=c0>=0?'g':'r';
+const o=world.h[cur.y]||{q:0,c:0};$('#st').innerHTML=`<div>Open<b>${f(d[0])}</b></div><div>High<b>${f(hi)}</b></div><div>Low<b>${f(lo)}</b></div><div>Owned<b>${o.q}</b></div><div>Avg cost<b>${o.q?f(o.c):'–'}</b></div><div>Position<b>$${f(o.q*p)}</b></div><div>Short shares<b>${world.sh[cur.y]?world.sh[cur.y].q:0}</b></div>`}
+function info(){if(cur)chart()}
+function trade(s){if(!cur||!world)return;const q=Math.floor(+$('#qty').value),m=t=>$('#tm').textContent=t;if(!(q>0))return m('Enter a quantity.');const p=pr(cur),h={...world.h},e=h[cur.y]||{q:0,c:0};let cash=world.cash;
+if(s=='b'){if(p*q>cash+1e-6)return m('Not enough cash.');h[cur.y]={q:e.q+q,c:(e.c*e.q+p*q)/(e.q+q)};cash-=p*q;m(`Bought ${q} at $${f(p)}`)}
+else{if(q>e.q)return m('You do not own that many shares.');cash+=p*q;e.q-q?h[cur.y]={q:e.q-q,c:e.c}:delete h[cur.y];m(`Sold ${q} at $${f(p)}`)}
+world={...world,h,cash};rTop();chart();wref.set(world).catch(()=>m('Save failed.'))}
+function commit(){rTop();chart();rList();wref.set(world).catch(()=>$('#tm').textContent='Save failed.')}
+function sh(s){if(!cur||!world)return;const q=Math.floor(+$('#qty').value),m=t=>$('#tm').textContent=t;if(!(q>0))return m('Enter a quantity.');const p=pr(cur),y=cur.y,S={...world.sh},e=S[y]||{q:0,c:0};let cash=world.cash;
+if(s=='x'){if(p*q>cash+1e-6)return m('Not enough cash for collateral.');cash-=p*q;S[y]={q:e.q+q,c:(e.c*e.q+p*q)/(e.q+q)};m(`Shorted ${q} at $${f(p)}. You earn money if it drops.`)}
+else{if(q>e.q)return m('You are not short that many shares.');cash+=Math.max(0,q*(2*e.c-p));e.q-q?S[y]={q:e.q-q,c:e.c}:delete S[y];m(`Covered ${q} at $${f(p)}`)}
+world={...world,sh:S,cash};commit()}
+function sellAll(all){if(!world)return;const ys=all?[...new Set([...Object.keys(world.h),...Object.keys(world.sh)])]:cur?[cur.y]:[];let cash=world.cash,h={...world.h},S={...world.sh},n=0;ys.forEach(y=>{const st=ST.find(s=>s.y==y),p=pr(st);if(h[y]){cash+=h[y].q*p;delete h[y];n++}if(S[y]){cash+=Math.max(0,S[y].q*(2*S[y].c-p));delete S[y];n++}});$('#tm').textContent=n?(all?'Sold everything.':'Sold all of '+cur.y+'.'):'Nothing to sell.';world={...world,h,sh:S,cash};commit()}
+/* drawing */
+function tl(t){tool=tool==t?'none':t;$('#bp').classList.toggle('on',tool=='pen');$('#be').classList.toggle('on',tool=='erase');$('#dv').classList.toggle('act',tool!='none')}
+function dl(){const v=$('#dv'),x=v.getContext('2d'),w=v.clientWidth,h=v.clientHeight,r=devicePixelRatio||1;x.setTransform(r,0,0,r,0,0);x.clearRect(0,0,w,h);x.lineWidth=2;x.lineCap=x.lineJoin='round';
+strokes.forEach(s=>{x.strokeStyle=s.u==myId?'#ffd60a':'rgba(110,190,255,.85)';x.beginPath();for(let i=0;i<s.p.length;i+=2){const X=s.p[i]*w,Y=s.p[i+1]*h;i?x.lineTo(X,Y):x.moveTo(X,Y)}x.stroke()})}
+const pt=e=>{const b=$('#dv').getBoundingClientRect();return[+((e.clientX-b.left)/b.width).toFixed(4),+((e.clientY-b.top)/b.height).toFixed(4)]};
+function er(e){const[x,y]=pt(e),b=$('#dv').getBoundingClientRect(),n=strokes.length;strokes=strokes.filter(s=>{for(let i=0;i<s.p.length;i+=2)if(Math.hypot((s.p[i]-x)*b.width,(s.p[i+1]-y)*b.height)<14)return false;return true});if(strokes.length!=n)dl()}
+let ns=null;$('#dv').addEventListener('pointerdown',e=>{if(tool=='none')return;busy=true;e.target.setPointerCapture(e.pointerId);if(tool=='pen'){ns={id:Date.now()+myId,u:myId,p:pt(e)};strokes.push(ns)}else er(e);dl()});
+$('#dv').addEventListener('pointermove',e=>{if(!busy)return;if(tool=='pen'&&ns){ns.p.push(...pt(e))}else if(tool=='erase')er(e);dl()});
+const end=()=>{if(!busy)return;busy=false;ns=null;save()};$('#dv').addEventListener('pointerup',end);$('#dv').addEventListener('pointercancel',end);
+function save(){ddoc&&ddoc.set({s:strokes}).catch(()=>{})}function clr(){strokes=strokes.filter(s=>s.u!=myId);dl();save()}
+/* multiplayer */
+let lp=0;function pres(x,y){if(!rm)return;try{rm.presence({n:prof.name,s:cur?cur.y:null,x:x??null,y:y??null})}catch(e){}}
+$('#cw').addEventListener('pointermove',e=>{const t=Date.now();if(t-lp<70)return;lp=t;const b=$('#cw').getBoundingClientRect();pres((e.clientX-b.left)/b.width,(e.clientY-b.top)/b.height)});
+function rPeers(){const d=$('#peers');d.innerHTML='';peers.forEach(p=>{const s=p.presence||{};if(!s.s)return;const b=document.createElement('button');b.textContent='⇢ Teleport to '+(s.n||'friend')+' ('+s.s+')';b.onclick=()=>pick(s.s);d.append(b)});
+const c=$('#cu');c.innerHTML='';if(!cur)return;peers.forEach(p=>{const s=p.presence||{};if(s.s!==cur.y||typeof s.x!='number')return;const e=document.createElement('div');e.className='cu';e.style.left=s.x*100+'%';e.style.top=s.y*100+'%';e.innerHTML='<i></i>';const n=document.createElement('span');n.textContent=s.n||'friend';e.append(n);c.append(e)})}
+setInterval(()=>{if(!world)return;rTop();chart()},1000);setInterval(()=>{if(world)rList()},3000);addEventListener('resize',()=>{chart()});
+/* v3: no sign-in database; saves live in this browser, multiplayer syncs through the live room */
+let mineD={},ers=new Set(),dsub=null;
+const WS=()=>LS('worlds')||{},sp=p=>{try{rm&&rm.presence(p)}catch(e){}};
+function persist(){if(!world)return;const W=WS();W[code]={code,name:world.name,created:world.created,cash:world.cash,h:world.h,sh:world.sh,v:world.v,mine:mineD,ers:[...ers].slice(-200)};SV('worlds',W)}
+function bw(){sp({w:{code,name:world.name,created:world.created,v:world.v,cash:world.cash,h:world.h,sh:world.sh}})}
+function bd(){sp({d:mineD,e:[...ers].slice(-100)})}
+function vs(y){const a=[...(mineD[y]||[])];peers.forEach(p=>{const d=(p.presence||{}).d;if(d&&Array.isArray(d[y]))a.push(...d[y])});return a.filter(s=>!ers.has(s.id))}
+function refD(){if(dsub&&cur&&!busy)dsub({data:()=>({s:vs(cur.y)})})}
+function mkD(y){return{onSnapshot(cb){dsub=cb;cb({data:()=>({s:vs(y)})});return()=>{dsub=null}},async set(o){const s=o.s||[];vs(y).forEach(v=>{if(!s.some(z=>z.id==v.id))ers.add(v.id)});mineD[y]=s.filter(z=>z.u==myId);persist();bd()}}}
+function onP(ch){peers=ch.peers.filter(p=>!p.isMe);let up=false;peers.forEach(p=>{const s=p.presence||{};(s.e||[]).forEach(i=>ers.add(i));const w=s.w;if(world&&w&&w.code==code&&w.v>world.v){world={...world,cash:w.cash,h:w.h||{},sh:w.sh||{},v:w.v};up=true}});
+for(const k in mineD)mineD[k]=mineD[k].filter(s=>!ers.has(s.id));if(world){persist();if(up){rTop();rList();chart()}}rPeers();refD()}
+async function joinRoom(c){try{rm&&rm.leave()}catch(e){}rm=null;try{R=R||await claude.use('room');rm=R?await R.join('w'+c):null;if(rm)rm.onPeers(onP)}catch(e){rm=null}}
+function enter(c,w0){code=c;world={...w0,h:w0.h||{},sh:w0.sh||{},v:w0.v||w0.created};mineD=w0.mine||{};ers=new Set(w0.ers||[]);cur=null;strokes=[];peers=[];dsub=null;
+wref={set:async w=>{w.v=Date.now();world=w;persist();bw()},collection:()=>({doc:y=>mkD(y)})};
+$('#sel').style.display='';$('#sd').style.display='none';$('#peers').innerHTML='';go('world');persist();rTop();rList();bw();bd();sp({n:prof.name,s:null});if(rm)onP({peers:rm.peers()})}
+async function createW(){const n=$('#wname').value.trim();if(!n){$('#e1').textContent='Pick a name first.';return}const c=rc();await joinRoom(c);enter(c,{name:n,created:Date.now(),cash:100000,h:{},sh:{}})}
+async function joinW(){const c=$('#jcode').value.trim().toUpperCase(),e=$('#e2');e.textContent='';if(!c){e.textContent='Enter a code.';return}const s=WS()[c];await joinRoom(c);if(s){enter(c,s);return}
+if(!rm){e.textContent='Online play is not available in this view. Open the shared link of this page.';return}
+e.textContent='Looking for the world…';for(let i=0;i<10;i++){const p=rm.peers().find(p=>!p.isMe&&p.presence&&p.presence.w&&p.presence.w.code==c);if(p){e.textContent='';enter(c,{...p.presence.w});return}await new Promise(r=>setTimeout(r,500))}
+try{rm.leave()}catch(x){}rm=null;e.textContent='No one is in that world right now. Ask your friend to open it first, then try again.'}
+function leave(){persist();try{rm&&rm.leave()}catch(e){}rm=null;peers=[];world=null;cur=null;dsub=null;go('menu')}
+function rSaved(){const W=WS(),d=$('#sv');d.innerHTML='';const L=Object.values(W).sort((a,b)=>b.v-a.v);if(L.length){const t=document.createElement('div');t.className='m';t.textContent='Saved worlds (auto-saved)';d.append(t)}
+L.forEach(w=>{const r=document.createElement('div');r.style.cssText='display:flex;gap:6px';const b=document.createElement('button');b.style.flex=1;b.textContent='▶ '+w.name+' · '+w.code;b.onclick=async()=>{await joinRoom(w.code);enter(w.code,w)};const x=document.createElement('button');x.textContent='✕';x.onclick=()=>{if(x.dataset.s){delete W[w.code];SV('worlds',W);rSaved()}else{x.dataset.s=1;x.textContent='Sure?'}};r.append(b,x);d.append(r)})}
+function go(id){document.querySelectorAll('.scr,#world').forEach(e=>e.classList.remove('show'));$('#'+id).classList.add('show');head();if(id=='wsel')rSaved()}
+async function init(){myId=LS('pid')||myId;SV('pid',myId);head();try{R=await claude.use('room')}catch(e){R=null}}
+</script></body></html>
